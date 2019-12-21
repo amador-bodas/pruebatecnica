@@ -19,6 +19,10 @@ class SimuladorService
      * @var Solicitud[]
      */
     private array $colaLlamadas = [];
+    /**
+     * @var Movimiento[]
+     */
+    private array $colaMovimientos = [];
     private \DateTime $inicio;
     private \DateTime $fin;
     private array $logPosiciones = [];
@@ -46,6 +50,7 @@ class SimuladorService
                 }
             }
             $this->procesarCola();
+            $this->procesarMovimiento();
             $this->logPosicion($instante);
         }
 
@@ -99,10 +104,14 @@ class SimuladorService
         /** @var Ascensor[] $ascensoresDisponibles */
         $ascensoresDisponibles = array_filter($this->ascensores, fn(Ascensor $ascensor) => $ascensor->isDisponible());
         foreach ($ascensoresDisponibles as $ascensorDisponible) {
-            if(count($this->colaLlamadas) > 0) {
+            while(count($this->colaLlamadas) > 0) {
                 $solicitud = array_shift($this->colaLlamadas);
                 $ascensorDisponible->setDisponible(false);
-                $ascensorDisponible->setPosicion($solicitud->getDestino());
+                $this->colaMovimientos[] = new Movimiento(
+                    $ascensorDisponible,
+                    $solicitud->getOrigen(),
+                    new Movimiento($ascensorDisponible, $solicitud->getDestino())
+                );
             }
         }
     }
@@ -118,6 +127,32 @@ class SimuladorService
     {
         foreach ($this->ascensores as $ascensor) {
             $this->logPosiciones[$instante->format("H:i")][$ascensor->getName()] = $ascensor->getPosicion();
+        }
+    }
+
+    private function procesarMovimiento()
+    {
+        $colaTemporal = [];
+        while(count ($this->colaMovimientos) > 0) {
+            $movimiento = array_shift($this->colaMovimientos);
+            $movimiento->avanzar();
+            if($movimiento->isFinalizado()) {
+                if($movimiento->getSiguiente()) {
+                    $colaTemporal[] = $movimiento->getSiguiente();
+                }
+                /** @var Ascensor $ascensor */
+                $ascensor = array_filter(
+                    $this->ascensores,
+                    fn(Ascensor $ascensor) => $ascensor->getName() === $movimiento->getAscensor()->getName()
+                )[0];
+                $ascensor->setPosicion($movimiento->getPosicion());
+            }else{
+                $colaTemporal[] = $movimiento;
+            }
+        }
+        
+        foreach ($colaTemporal as $movimientoTemporal) {
+            $this->colaMovimientos[] = $movimientoTemporal;
         }
     }
 }
