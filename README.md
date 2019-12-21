@@ -9,6 +9,4 @@
 * Web server (o symfony standalone server)
 
 ### Instalación
-
-
-## Enunciado
+   [symfony setup](https://symfony.com/doc/current/setup.html)

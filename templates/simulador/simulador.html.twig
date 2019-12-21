@@ -1,0 +1,25 @@
+{% extends 'base.html.twig' %}
+{% block body %}
+<h1>Resultados Simulador</h1>
+
+<table class="table table-responsive table-stripped">
+    <thead>
+        <tr>
+            <th>Hora</th>
+            <th>Ascensor1</th>
+            <th>Ascensor2</th>
+            <th>Ascensor3</th>
+        </tr>
+    </thead>
+    <tbody>
+    {% for key, log in logs %}
+        <tr>
+            <td>{{ key }}</td>
+            <td>{{ log['ascensor0'] }}</td>
+            <td>{{ log['ascensor1'] }}</td>
+            <td>{{ log['ascensor2'] }}</td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

@@ -16,6 +16,8 @@ class SimuladorController extends AbstractController
 
     public function execute()
     {
-        $this->simulador->secuenciar();
+        $logs = $this->simulador->secuenciar();
+
+        return $this->render('simulador/simulador.html.twig', ['logs' => $logs]);
     }
 }
