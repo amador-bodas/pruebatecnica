@@ -43,7 +43,6 @@ class SimuladorService
         /** @var \DateTime $instante */
         foreach ($periodo as $instante) {
             $minuto = (int) $instante->format('i');
-            $this->resetDisponibilidad();
             foreach ($this->secuencias as $secuencia) {
                 if($secuencia->instanteEstaEnIntervalo($instante) && ($minuto % $secuencia->getPeriodo()) === 0) {
                     $this->solicitarAscensor($secuencia);
@@ -116,13 +115,6 @@ class SimuladorService
         }
     }
 
-    private function resetDisponibilidad()
-    {
-        foreach ($this->ascensores as $ascensor) {
-            $ascensor->setDisponible(true);
-        }
-    }
-
     private function logPosicion(\DateTime $instante): void
     {
         foreach ($this->ascensores as $ascensor) {
@@ -146,6 +138,9 @@ class SimuladorService
                     fn(Ascensor $ascensor) => $ascensor->getName() === $movimiento->getAscensor()->getName()
                 )[0];
                 $ascensor->setPosicion($movimiento->getPosicion());
+                if(!$movimiento->getSiguiente()) {
+                    $ascensor->setDisponible(true);
+                }
             }else{
                 $colaTemporal[] = $movimiento;
             }
