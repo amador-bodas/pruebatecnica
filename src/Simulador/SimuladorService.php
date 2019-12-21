@@ -99,19 +99,17 @@ class SimuladorService
     }
 
     private function procesarCola()
-    {
-        /** @var Ascensor[] $ascensoresDisponibles */
+{        /** @var Ascensor[] $ascensoresDisponibles */
         $ascensoresDisponibles = array_filter($this->ascensores, fn(Ascensor $ascensor) => $ascensor->isDisponible());
-        foreach ($ascensoresDisponibles as $ascensorDisponible) {
-            while(count($this->colaLlamadas) > 0) {
-                $solicitud = array_shift($this->colaLlamadas);
-                $ascensorDisponible->setDisponible(false);
-                $this->colaMovimientos[] = new Movimiento(
-                    $ascensorDisponible,
-                    $solicitud->getOrigen(),
-                    new Movimiento($ascensorDisponible, $solicitud->getDestino())
-                );
-            }
+        while(count($this->colaLlamadas) > 0 && count($ascensoresDisponibles) > 0) {
+            $solicitud = array_shift($this->colaLlamadas);
+            $ascensorDisponible = array_shift($ascensoresDisponibles);
+            $ascensorDisponible->setDisponible(false);
+            $this->colaMovimientos[] = new Movimiento(
+                $ascensorDisponible,
+                $solicitud->getOrigen(),
+                new Movimiento($ascensorDisponible, $solicitud->getDestino())
+            );
         }
     }
 
@@ -132,14 +130,11 @@ class SimuladorService
                 if($movimiento->getSiguiente()) {
                     $colaTemporal[] = $movimiento->getSiguiente();
                 }
-                /** @var Ascensor $ascensor */
-                $ascensor = array_filter(
-                    $this->ascensores,
-                    fn(Ascensor $ascensor) => $ascensor->getName() === $movimiento->getAscensor()->getName()
-                )[0];
-                $ascensor->setPosicion($movimiento->getPosicion());
+                //dump($movimiento);
+                $keyAscensor = $this->findKeyAscensorByName($movimiento->getAscensor()->getName());
+                $this->ascensores[$keyAscensor]->setPosicion($movimiento->getPosicion());
                 if(!$movimiento->getSiguiente()) {
-                    $ascensor->setDisponible(true);
+                    $this->ascensores[$keyAscensor]->setDisponible(true);
                 }
             }else{
                 $colaTemporal[] = $movimiento;
@@ -149,5 +144,17 @@ class SimuladorService
         foreach ($colaTemporal as $movimientoTemporal) {
             $this->colaMovimientos[] = $movimientoTemporal;
         }
+    }
+
+    private function findKeyAscensorByName(string $name): ?int
+    {
+
+        foreach ($this->ascensores as $key => $ascensor) {
+            if($ascensor->getName() === $name) {
+                return $key;
+            }
+        }
+
+        return null;
     }
 }
